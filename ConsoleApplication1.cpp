@@ -3,9 +3,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <limits.h> //for LINE_MAX
-#define FAILURE -1
+#define FIASCO -1
 #define SUCCESS 0
-
+//#define LINE_MAX 2048 //для отладки в виндоус
 typedef struct node {
 	char* value; //строка
 	struct node* next; //сосед
@@ -20,10 +20,7 @@ Node* nodeInit() {
 	head->value = NULL;
 	return head;
 }
-void freeNode(Node* currentNode) {
-	free(currentNode->value);
-	free(currentNode);
-}
+
 Node* addString(char* newLine) {
 	Node* newNode = NULL;
 	newNode = (Node*)malloc(sizeof(Node));
@@ -36,9 +33,8 @@ Node* addString(char* newLine) {
 		perror("can`t create newNode->value");
 		return NULL;
 	}
-
 	strcpy(newNode->value, newLine);
-	
+	//strcpy_s(newNode->value, strlen(newLine) + 1, newLine);
 	newNode->next = NULL;
 	return(newNode);
 }
@@ -49,7 +45,7 @@ void freememory(Node* node) {
 	Node* nxtNode = NULL;
 	while (node != NULL) {
 		nxtNode = node->next;
-		freeNode(node);
+		free(node);
 		node = nxtNode;
 	}
 }
@@ -62,7 +58,7 @@ int main() {
 	//выделим память
 	head = nodeInit();
 	if (head == NULL) {
-		exit(FAILURE);
+		exit(FIASCO);
 	}
 	//текущий узел
 	currentNode = head;
@@ -71,10 +67,20 @@ int main() {
 	while (fgets(line, LINE_MAX, stdin) != NULL) {
 		if (line[0] == '.')
 			break;
+
+		int i;
+		for (i = 0; i < LINE_MAX; i++)
+		{
+			if (line[i] == '\n')
+			{
+				line[i] = '\0';
+				break;
+			}
+		}
 		currentNode->next = addString(line); //добавим строку в список
 		if (currentNode->next == NULL) {
 			freememory(currentNode);
-			exit(FAILURE);
+			exit(FIASCO);
 		}
 		currentNode = currentNode->next; //указатель на строку
 	}
@@ -82,7 +88,7 @@ int main() {
 	if (ferr != SUCCESS) {
 		perror("detection of data-flow errors");
 		freememory(currentNode);
-		exit(FAILURE);
+		exit(FIASCO);
 	}
 	//вывод на экран
 	for (i = head->next; i != NULL; i = i->next) {
@@ -93,6 +99,5 @@ int main() {
 	freememory(i);
 
 	free(head);
-
 	return SUCCESS;
 }
